@@ -1,0 +1,1 @@
+# Media3 keeps needed classes through AAR rules.

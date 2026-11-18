@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>MiYing.UI</RootNamespace>
+    <AssemblyName>MiYing.UI</AssemblyName>
+    <Description>密影共享照片预览控件</Description>
+  </PropertyGroup>
+
+</Project>

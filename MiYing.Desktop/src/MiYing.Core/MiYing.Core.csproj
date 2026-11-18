@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>MiYing.Core</RootNamespace>
+    <AssemblyName>MiYing.Core</AssemblyName>
+    <Description>密影加密视频内核：MSV 格式加解密引擎</Description>
+  </PropertyGroup>
+
+</Project>

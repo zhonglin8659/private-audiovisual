@@ -1,0 +1,19 @@
+# Build outputs
+**/bin/
+**/obj/
+**/build/
+**/dist/
+.gradle/
+.kotlin/
+.idea/
+.vs/
+*.iml
+*.user
+*.suo
+
+# Local environment / caches
+.local
+local.properties
+.nuget-local/*.nupkg
+.dotnet-home/
+test_assets/

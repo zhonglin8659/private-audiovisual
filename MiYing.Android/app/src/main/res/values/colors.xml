@@ -1,0 +1,13 @@
+<resources>
+    <color name="bg">#FF111318</color>
+    <color name="surface">#FF171A21</color>
+    <color name="surface_light">#FF21252F</color>
+    <color name="border">#FF303642</color>
+    <color name="text">#FFE7EAF2</color>
+    <color name="text_sub">#FF9AA2B1</color>
+    <color name="accent">#FF4F8FFF</color>
+    <color name="accent_dark">#FF2C5BD0</color>
+    <color name="danger">#FFFF6A6A</color>
+    <color name="control_bg">#E6111318</color>
+    <color name="control_surface">#E6202530</color>
+</resources>

@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">密影播放器</string>
+    <string name="title_home">本地加密媒体</string>
+    <string name="btn_open_video">打开加密视频</string>
+    <string name="btn_open_photo">打开加密照片</string>
+    <string name="btn_unlock">解锁查看</string>
+    <string name="hint_password">输入访问密码</string>
+    <string name="remember_password">本次运行记住密码</string>
+    <string name="recent">最近打开</string>
+    <string name="no_recent">暂无最近打开记录</string>
+    <string name="video_play">播放</string>
+    <string name="video_pause">暂停</string>
+    <string name="video_mute">静音</string>
+    <string name="video_unmute">取消静音</string>
+    <string name="video_speed">倍速</string>
+    <string name="photo_fit">适应</string>
+    <string name="photo_100">100%</string>
+    <string name="photo_zoom_in">放大</string>
+    <string name="photo_zoom_out">缩小</string>
+    <string name="photo_rotate">旋转</string>
+</resources>

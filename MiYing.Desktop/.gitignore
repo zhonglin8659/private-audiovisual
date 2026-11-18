@@ -1,0 +1,9 @@
+.vs/
+**/bin/
+**/obj/
+dist/
+.nuget-local/*.nupkg
+.dotnet-home/
+test_assets/
+*.user
+*.suo

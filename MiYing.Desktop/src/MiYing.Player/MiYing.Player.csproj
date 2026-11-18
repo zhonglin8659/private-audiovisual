@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <RootNamespace>MiYing.Player</RootNamespace>
+    <AssemblyName>MiYing.Player</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <Description>密影 · 加密视频 / 照片查看器</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" Version="3.0.*" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="LibVLCSharp" Version="3.*" />
+    <PackageReference Include="LibVLCSharp.WPF" Version="3.*" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MiYing.Core\MiYing.Core.csproj" />
+    <ProjectReference Include="..\MiYing.UI\MiYing.UI.csproj" />
+  </ItemGroup>
+
+</Project>
