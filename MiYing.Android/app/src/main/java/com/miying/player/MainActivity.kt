@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -16,6 +17,7 @@ import android.os.Looper
 import android.text.TextUtils
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -76,6 +78,7 @@ class MainActivity : Activity() {
     private lateinit var btnPlay: Button
     private lateinit var btnMute: Button
     private lateinit var btnSpeed: Button
+    private lateinit var btnVideoFullscreen: Button
     private lateinit var photoView: PhotoZoomView
     private lateinit var photoName: TextView
     private lateinit var photoInfo: TextView
@@ -101,6 +104,9 @@ class MainActivity : Activity() {
     private var progressRunnable: Runnable? = null
     private var isVideoFullScreen = false
     private var openPhotoAfterUnlock = false
+    private var videoScale = 1f
+    private var videoTransX = 0f
+    private var videoTransY = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,6 +151,7 @@ class MainActivity : Activity() {
         btnPlay = findViewById(R.id.btn_play)
         btnMute = findViewById(R.id.btn_mute)
         btnSpeed = findViewById(R.id.btn_speed)
+        btnVideoFullscreen = findViewById(R.id.btn_video_fullscreen)
         photoView = findViewById(R.id.photo_view)
         photoName = findViewById(R.id.text_photo_name)
         photoInfo = findViewById(R.id.text_photo_info)
@@ -174,11 +181,42 @@ class MainActivity : Activity() {
             }
 
             override fun onDoubleTap(e: MotionEvent): Boolean {
-                toggleVideoFullscreen()
+                onVideoDoubleTap()
                 return true
             }
         })
-        videoTouchLayer.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        val scaleDetector = ScaleGestureDetector(this, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                applyVideoZoom(detector.scaleFactor, detector.focusX, detector.focusY)
+                return true
+            }
+
+            override fun onScaleEnd(detector: ScaleGestureDetector) {
+                if (videoScale <= MIN_VIDEO_ZOOM) {
+                    resetVideoZoom()
+                }
+            }
+        })
+        var lastTouchX = 0f
+        var lastTouchY = 0f
+        videoTouchLayer.setOnTouchListener { _, event ->
+            scaleDetector.onTouchEvent(event)
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    lastTouchX = event.x
+                    lastTouchY = event.y
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (!scaleDetector.isInProgress && event.pointerCount == 1 && videoScale > MIN_VIDEO_ZOOM) {
+                        panVideo(event.x - lastTouchX, event.y - lastTouchY)
+                    }
+                    lastTouchX = event.x
+                    lastTouchY = event.y
+                }
+            }
+            gestureDetector.onTouchEvent(event)
+            true
+        }
 
         boundControl(R.id.btn_back10) {
             player?.let { current -> current.seekTo(maxOf(0L, current.currentPosition - 10_000L)) }
@@ -199,7 +237,7 @@ class MainActivity : Activity() {
             }
         }
         boundControl(R.id.btn_speed) { showSpeedDialog() }
-        boundControl(R.id.btn_video_fullscreen) { toggleVideoFullscreen() }
+        boundControl(R.id.btn_video_fullscreen) { toggleVideoLandscape() }
 
         seekVideo.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -268,8 +306,10 @@ class MainActivity : Activity() {
 
     private fun showHomeScreen() {
         cancelHideControls()
-        applyImmersiveMode(false)
         isVideoFullScreen = false
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        btnVideoFullscreen.text = "横屏"
+        applyImmersiveMode(false)
         saveCurrentProgress()
         closeCurrentMedia()
         screenHome.visibility = View.VISIBLE
@@ -371,6 +411,9 @@ class MainActivity : Activity() {
         screenPhoto.visibility = View.GONE
         videoName.text = media.displayName
         isVideoFullScreen = false
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        btnVideoFullscreen.text = "横屏"
+        resetVideoZoom()
         applyImmersiveMode(false)
         initializePlayer(media)
         showVideoControls()
@@ -459,14 +502,81 @@ class MainActivity : Activity() {
             .show()
     }
 
-    private fun toggleVideoFullscreen() {
+    private fun toggleVideoLandscape() {
         if (screenVideo.visibility != View.VISIBLE) {
             return
         }
 
+        resetVideoZoom()
         isVideoFullScreen = !isVideoFullScreen
-        applyImmersiveMode(isVideoFullScreen)
+        if (isVideoFullScreen) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            btnVideoFullscreen.text = "竖屏"
+            applyImmersiveMode(true)
+            playerView.postDelayed({
+                if (isVideoFullScreen) {
+                    applyImmersiveMode(true)
+                }
+            }, 250L)
+        } else {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            btnVideoFullscreen.text = "横屏"
+            applyImmersiveMode(false)
+        }
         showVideoControls()
+    }
+
+    private fun onVideoDoubleTap() {
+        if (videoScale > MIN_VIDEO_ZOOM) {
+            resetVideoZoom()
+        } else {
+            toggleVideoLandscape()
+        }
+    }
+
+    private fun applyVideoZoom(factor: Float, focusX: Float, focusY: Float) {
+        val oldScale = videoScale
+        val newScale = (oldScale * factor).coerceIn(MIN_VIDEO_ZOOM, MAX_VIDEO_ZOOM)
+        if (newScale == oldScale) {
+            return
+        }
+
+        val centerX = playerView.width / 2f
+        val centerY = playerView.height / 2f
+        val ratio = newScale / oldScale
+        videoTransX = (focusX - centerX) - ratio * (focusX - videoTransX - centerX)
+        videoTransY = (focusY - centerY) - ratio * (focusY - videoTransY - centerY)
+        videoScale = newScale
+        applyVideoTransform()
+    }
+
+    private fun panVideo(dx: Float, dy: Float) {
+        videoTransX += dx
+        videoTransY += dy
+        applyVideoTransform()
+    }
+
+    private fun applyVideoTransform() {
+        val maxX = (videoScale - 1f) * playerView.width / 2f
+        val maxY = (videoScale - 1f) * playerView.height / 2f
+        videoTransX = videoTransX.coerceIn(-maxX, maxX)
+        videoTransY = videoTransY.coerceIn(-maxY, maxY)
+        playerView.pivotX = playerView.width / 2f
+        playerView.pivotY = playerView.height / 2f
+        playerView.scaleX = videoScale
+        playerView.scaleY = videoScale
+        playerView.translationX = videoTransX
+        playerView.translationY = videoTransY
+    }
+
+    private fun resetVideoZoom() {
+        videoScale = MIN_VIDEO_ZOOM
+        videoTransX = 0f
+        videoTransY = 0f
+        playerView.scaleX = 1f
+        playerView.scaleY = 1f
+        playerView.translationX = 0f
+        playerView.translationY = 0f
     }
 
     private fun showVideoControls(autoHide: Boolean = true) {
@@ -746,6 +856,7 @@ class MainActivity : Activity() {
         selectedMedia?.close()
         selectedMedia = null
         photoView.setImageBitmap(null)
+        resetVideoZoom()
     }
 
     // API 33+ 由 OnBackInvokedDispatcher 处理，这里保留 API 26-32 的返回键兼容入口。
@@ -790,5 +901,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQUEST_OPEN_MEDIA = 1001
+        private const val MIN_VIDEO_ZOOM = 1f
+        private const val MAX_VIDEO_ZOOM = 5f
     }
 }
