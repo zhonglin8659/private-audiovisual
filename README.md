@@ -17,7 +17,7 @@
 ### Android
 
 ```powershell
-cd D:\PrivateAudiovisual\MiYing.Android
+cd D:\MyProject\private-audiovisual\MiYing.Android
 .\gradlew.bat assembleDebug
 ```
 
@@ -26,7 +26,7 @@ cd D:\PrivateAudiovisual\MiYing.Android
 ### Windows
 
 ```powershell
-cd D:\PrivateAudiovisual\MiYing.Desktop
+cd D:\MyProject\private-audiovisual\MiYing.Desktop
 dotnet build .\MiYingVideo.sln -c Debug -m:1 -nr:false
 ```
 
@@ -45,5 +45,5 @@ dotnet build .\MiYingVideo.sln -c Debug -m:1 -nr:false
 - 本地依赖缓存：`.nuget-local` 只保留占位说明，不复制大体积 nupkg；`.dotnet-home` 不复制
 - 临时测试素材：`test_assets`
 
-建议将本目录作为单仓库，或分别把 `MiYing.Android` 和 `MiYing.Desktop` 建为两个独立仓库。
-当前尚未初始化 Git。`MiYing.Android` 与 `MiYing.Desktop` 均已验证可独立构建。
+本仓库托管在 GitHub（https://github.com/zhonglin8659/private-audiovisual），统一维护三条产品线的源码。
+已验证：`MiYing.Android` 可通过 `gradlew.bat assembleDebug` 构建；`MiYing.Desktop` 解决方案构建成功，并通过 75 个单元测试。

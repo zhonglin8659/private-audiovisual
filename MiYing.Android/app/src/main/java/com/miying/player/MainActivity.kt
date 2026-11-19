@@ -20,6 +20,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.window.OnBackInvokedDispatcher
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
@@ -47,6 +48,7 @@ import com.miying.player.ui.PhotoZoomView
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.Locale
 import java.util.concurrent.Executors
 
 @UnstableApi
@@ -104,6 +106,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         bindViews()
+        registerBackCallback()
         setupListeners()
         refreshRecent()
         showHomeScreen()
@@ -323,7 +326,8 @@ class MainActivity : Activity() {
                 runOnUiThread {
                     progressUnlock.visibility = View.GONE
                     btnUnlock.isEnabled = true
-                    if (pendingRememberPassword) rememberedPassword = password.toCharArray()
+                    rememberedPassword?.fill(' ')
+                    rememberedPassword = if (pendingRememberPassword) password.toCharArray() else null
                     onMediaUnlocked(media, bitmap)
                 }
             } catch (error: Throwable) {
@@ -560,7 +564,7 @@ class MainActivity : Activity() {
     private fun buildPhotoInfo(scale: Float): String {
         val bitmap = selectedPhoto
         val dimension = if (bitmap != null) "${bitmap.width}×${bitmap.height}" else ""
-        return dimension + "  " + String.format("%.0f%%", scale * 100f)
+        return dimension + "  " + String.format(Locale.US, "%.0f%%", scale * 100f)
     }
 
     private fun decodeBitmap(data: ByteArray): Bitmap? {
@@ -576,12 +580,8 @@ class MainActivity : Activity() {
     private fun calculateSampleSize(width: Int, height: Int): Int {
         val maxDimension = 4096
         var sampleSize = 1
-        if (width > maxDimension || height > maxDimension) {
-            val halfWidth = width / 2
-            val halfHeight = height / 2
-            while ((halfWidth / sampleSize) >= maxDimension && (halfHeight / sampleSize) >= maxDimension) {
-                sampleSize *= 2
-            }
+        while (width / sampleSize > maxDimension || height / sampleSize > maxDimension) {
+            sampleSize *= 2
         }
         return sampleSize
     }
@@ -615,9 +615,9 @@ class MainActivity : Activity() {
         val minutes = (totalSeconds % 3600L) / 60L
         val seconds = totalSeconds % 60L
         return if (hours > 0L) {
-            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
         } else {
-            String.format("%02d:%02d", minutes, seconds)
+            String.format(Locale.US, "%02d:%02d", minutes, seconds)
         }
     }
 
@@ -748,15 +748,29 @@ class MainActivity : Activity() {
         photoView.setImageBitmap(null)
     }
 
+    // API 33+ 由 OnBackInvokedDispatcher 处理，这里保留 API 26-32 的返回键兼容入口。
+    @SuppressLint("GestureBackNavigation")
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        handleBack()
+    }
+
+    private fun registerBackCallback() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+            ) { handleBack() }
+        }
+    }
+
+    private fun handleBack() {
         if (screenUnlock.visibility == View.VISIBLE ||
             screenVideo.visibility == View.VISIBLE ||
             screenPhoto.visibility == View.VISIBLE
         ) {
             showHomeScreen()
         } else {
-            super.onBackPressed()
+            finish()
         }
     }
 

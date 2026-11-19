@@ -8,6 +8,4 @@
     <color name="accent">#FF4F8FFF</color>
     <color name="accent_dark">#FF2C5BD0</color>
     <color name="danger">#FFFF6A6A</color>
-    <color name="control_bg">#E6111318</color>
-    <color name="control_surface">#E6202530</color>
 </resources>
